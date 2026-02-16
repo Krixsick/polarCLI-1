@@ -75,7 +75,21 @@ class Polar(cmd.Cmd):
         console.print()
         console.print(table)
 
-    
+    def do_cd(self, arg):
+        try:
+            if not arg:
+                target_dir = os.path.expanduser("~")
+            else:
+                target_dir = os.path.expanduser(arg)
+            os.chdir(target_dir)
+            print(f"[green]Changed directory to:[/green] {os.getcwd()}")
+            
+        except FileNotFoundError:
+            print(f"[red]Error: Directory '{arg}' not found.[/red]")
+        except PermissionError:
+            print(f"[red]Error: Permission denied accessing '{arg}'.[/red]")
+        except Exception as e:
+            print(f"[red]Error: {e}[/red]")
     def do_fb(self, arg):
 
         arguments = arg.lower().split(" ")
