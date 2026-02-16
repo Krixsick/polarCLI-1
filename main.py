@@ -1,8 +1,7 @@
 from pathlib import Path
 import cmd
 import typer
-from datetime import datetime
-from zoneinfo import ZoneInfo
+import pyfiglet
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -13,6 +12,7 @@ import time
 import os
 import files
 import shutil
+from rich.progress import track
 app = typer.Typer()
 # app.add_typer(files.app, name="files")
 console = Console()
@@ -29,14 +29,8 @@ def startup_animation():
         sys.stdout.flush()        
         time.sleep(0.001)        
     sys.stdout.write(RESET + "\n")
-    welcome = "Welcome to Polar CLI"
-    sys.stdout.write(BOLD_CYAN)
-    for char in welcome:
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        time.sleep(0.01)
-    sys.stdout.write(RESET + "\n")
-    time.sleep(0.1)
+    result = pyfiglet.figlet_format("Polar CLI")
+    print(f"[cyan] {result} [/cyan]")   
     sys.stdout.write(CYAN)
     for _ in range(terminal_width):
         sys.stdout.write("━")
@@ -47,11 +41,27 @@ def startup_animation():
 POLAR_COMMANDS = [
     ("help",            "Display this help table"),
     ("fb <int> <type>",       "Find files above a size threshold (-b fb 10 mb)"),
-    ("p fs",      "List all files with their sizes"),
-    ("files search",    "Search for files by name pattern"),
+    ("del <file>",      "Deletes a file"),
+    ("",    "Search for files by name pattern"),
     ("exit",            "Exit Polar CLI"),
 ]
 
+def shutdown_animation():
+    terminal_width = shutil.get_terminal_size().columns
+    sys.stdout.write(CYAN)
+    for _ in range(terminal_width):
+        sys.stdout.write("━")
+        sys.stdout.flush()        
+        time.sleep(0.001)        
+    sys.stdout.write(RESET + "\n")
+    result = pyfiglet.figlet_format("Exiting Polar CLI")
+    print(f"[cyan] {result} [/cyan]")   
+    sys.stdout.write(CYAN)
+    for _ in range(terminal_width):
+        sys.stdout.write("━")
+        sys.stdout.flush()
+        time.sleep(0.001)
+    sys.stdout.write(RESET + "\n\n")
 class Polar(cmd.Cmd):
     
     @property
@@ -82,16 +92,15 @@ class Polar(cmd.Cmd):
             else:
                 target_dir = os.path.expanduser(arg)
             os.chdir(target_dir)
-            print(f"[green]Changed directory to:[/green] {os.getcwd()}")
-            
+            print(f"[cyan]Changed directory to:[/cyan] {os.getcwd()}")
         except FileNotFoundError:
             print(f"[red]Error: Directory '{arg}' not found.[/red]")
         except PermissionError:
             print(f"[red]Error: Permission denied accessing '{arg}'.[/red]")
         except Exception as e:
             print(f"[red]Error: {e}[/red]")
+            
     def do_fb(self, arg):
-
         arguments = arg.lower().split(" ")
         if not arg or len(arguments) != 2:
             print("Please input a number (-b fb <int> <type>)")
@@ -129,11 +138,36 @@ class Polar(cmd.Cmd):
         except Exception as e:
             print(e)    
         return  
+
+    def do_del(self, arg):
+        file = arg.strip()
+        if not arg:
+            print(f"[red]Error: Please provide 1 argument '{arg}'.[/red]")
+            return
+        try:
+            full_path = os.path.expanduser(file)
+            if not os.path.exists(full_path):
+                print(f"[red]Error: File does not exist '{arg}'.[/red]")
+                return 
+            elif os.path.isdir(full_path):
+                print(f"[red]Error: Cannot delete a directory'{arg}'.[/red]")
+                return 
+            delete_confirmation = input(f"[cyan] Are you sure you want to delete (y/n) [/cyan] '{arg}' > ").lower()
+            if delete_confirmation == "y":
+                try:
+                    os.remove(full_path)
+                    print(f"{arg} [cyan] has been deleted! [/cyan]")
+                except Exception as e:
+                    print(e)
+        except Exception as e:
+            print(e)
+        
     
     def do_exit(self, arg):
         """Exit the Polar Bot."""
-        print("[yellow]Goodbye![/yellow]")
+        shutdown_animation()
         return True
+
     
     def default(self, line):
         try:
