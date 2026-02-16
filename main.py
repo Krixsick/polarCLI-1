@@ -42,7 +42,6 @@ POLAR_COMMANDS = [
     ("help",            "Display this help table"),
     ("fb <int> <type>",       "Find files above a size threshold (-b fb 10 mb)"),
     ("del <file>",      "Deletes a file"),
-    ("",    "Search for files by name pattern"),
     ("exit",            "Exit Polar CLI"),
 ]
 
